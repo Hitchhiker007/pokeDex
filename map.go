@@ -60,7 +60,7 @@ func fetchLocations(cfg *Config, url string) error {
 
 }
 
-func commandMap(cfg *Config) error {
+func commandMap(cfg *Config, args []string) error {
 	url := cfg.MapNextURL
 	if url == "" {
 		url = "https://pokeapi.co/api/v2/location-area/?offset=0&limit=20"
@@ -68,7 +68,7 @@ func commandMap(cfg *Config) error {
 	return fetchLocations(cfg, url)
 }
 
-func commandMapBack(cfg *Config) error {
+func commandMapBack(cfg *Config, args []string) error {
 	if cfg.MapPrevURL == "" {
 		fmt.Println("You are already at the first page!")
 		return nil

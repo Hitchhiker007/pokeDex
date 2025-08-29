@@ -7,10 +7,12 @@ import (
 	"strings"
 )
 
+// let all commands have a second param args so function signatures are uniform
+// allows the REPL to call any command dynamically, even if some commands like help or exit dont use them
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*Config) error
+	callback    func(*Config, []string) error
 }
 
 func startRepl(cfg *Config) {
@@ -28,7 +30,8 @@ func startRepl(cfg *Config) {
 		command, exists := getCommands()[commandName]
 
 		if exists {
-			err := command.callback(cfg)
+			// now parse 2nd arg
+			err := command.callback(cfg, words[1:])
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -63,6 +66,11 @@ func getCommands() map[string]cliCommand {
 			description: "Diplay 20 previous locations",
 			callback:    commandMapBack,
 		},
+		"explore": {
+			name:        "explore",
+			description: "explore the current area for pokemon",
+			callback:    commandExplore,
+		},
 	}
 }
 
@@ -72,13 +80,13 @@ func cleanInput(text string) []string {
 	return words
 }
 
-func commandExit(cfg *Config) error {
+func commandExit(cfg *Config, args []string) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp(cfg *Config) error {
+func commandHelp(cfg *Config, args []string) error {
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("Usage:")
 	fmt.Println()
