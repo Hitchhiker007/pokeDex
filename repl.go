@@ -13,8 +13,7 @@ type cliCommand struct {
 	callback    func(*Config) error
 }
 
-func startRepl() {
-	cfg := &Config{} // initialize config
+func startRepl(cfg *Config) {
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
 		fmt.Print("Pokedex > ")

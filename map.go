@@ -3,13 +3,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
+
+	"github.com/Hitchhiker007/pokeDex/pokeapi"
 )
 
 type Config struct {
-	MapNextURL string // URL for next page of locations
-	MapPrevURL string // URL for previous page (optional)
+	pokeapiClient pokeapi.Client
+	MapNextURL    string // URL for next page of locations
+	MapPrevURL    string // URL for previous page (optional)
 }
 
 // LocationList struct
@@ -34,20 +35,10 @@ func fetchLocations(cfg *Config, url string) error {
 		url = "https://pokeapi.co/api/v2/location-area/?offset=0&limit=20"
 	}
 
-	// fetch the data using the url
-	res, err := http.Get(url)
+	// Use pokeapi client to fetch
+	body, err := cfg.pokeapiClient.Get(url)
 	if err != nil {
 		return err
-	}
-	defer res.Body.Close()
-
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return err
-	}
-
-	if res.StatusCode > 299 {
-		return fmt.Errorf("Response failed with status %d: %s", res.StatusCode, body)
 	}
 
 	// unmarshel the JSON
