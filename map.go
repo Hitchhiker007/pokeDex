@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/Hitchhiker007/pokeDex/pokeapi"
+	pokeapi "github.com/Hitchhiker007/pokeDex/internal"
 )
 
 type Config struct {
