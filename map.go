@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 
-	pokeapi "github.com/Hitchhiker007/pokeDex/internal"
+	pokeapi "github.com/Hitchhiker007/pokeDex/pokeapi"
 )
 
 type Config struct {
-	pokeapiClient pokeapi.Client
+	pokeapiClient *pokeapi.Client
 	MapNextURL    string // URL for next page of locations
 	MapPrevURL    string // URL for previous page (optional)
 }
