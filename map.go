@@ -11,6 +11,7 @@ type Config struct {
 	pokeapiClient *pokeapi.Client
 	MapNextURL    string // URL for next page of locations
 	MapPrevURL    string // URL for previous page (optional)
+	Pokedex       map[string]Pokemon
 }
 
 // LocationList struct

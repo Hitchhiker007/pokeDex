@@ -14,6 +14,7 @@ func main() {
 		pokeapiClient: client, // assign to the named field
 		MapNextURL:    "",
 		MapPrevURL:    "",
+		Pokedex:       make(map[string]Pokemon),
 	}
 
 	startRepl(cfg)
