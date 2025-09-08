@@ -5,6 +5,10 @@ import (
 )
 
 func commandPokedex(cfg *Config, args []string) error {
+	if cfg == nil {
+		return fmt.Errorf("error! config is nil")
+	}
+
 	if len(cfg.Pokedex) == 0 {
 		fmt.Println("You haven't caught any Pokemon yet!")
 		return nil
