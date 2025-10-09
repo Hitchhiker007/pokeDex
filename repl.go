@@ -1,10 +1,11 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/chzyer/readline"
 )
 
 // let all commands have a second param args so function signatures are uniform
@@ -15,13 +16,34 @@ type cliCommand struct {
 	callback    func(*Config, []string) error
 }
 
+// replaced bufio.Scanner with readline for a better user experience
+// up and down arrow keys for navigate previous commands
+// command history stored in /tmp/pokedex_history.tmp
+// credit to https://github.com/chzyer/readline
 func startRepl(cfg *Config) {
-	scanner := bufio.NewScanner(os.Stdin)
-	for {
-		fmt.Print("Pokedex > ")
-		scanner.Scan()
+	rl, err := readline.NewEx(&readline.Config{
+		Prompt:          "Pokedex > ",
+		HistoryFile:     "/tmp/pokedex_history.tmp",
+		InterruptPrompt: "^C",
+		EOFPrompt:       "exit",
+	})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to start REPL: %v\n", err)
+		return
+	}
+	defer rl.Close()
 
-		words := cleanInput(scanner.Text())
+	for {
+		line, err := rl.Readline()
+		if err != nil {
+			if err == readline.ErrInterrupt {
+				continue
+			} else {
+				break
+			}
+		}
+
+		words := cleanInput(line)
 		if len(words) == 0 {
 			continue
 		}
