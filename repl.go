@@ -108,6 +108,11 @@ func getCommands() map[string]cliCommand {
 			description: "It takes the name of a Pokemon and prints the name, height, weight, stats and type(s) of the Pokemon.",
 			callback:    commandInspect,
 		},
+		"load": {
+			name: "load",
+			description: "displays a list of save files to load from",
+			callback: commandLoad,
+		},
 	}
 }
 
