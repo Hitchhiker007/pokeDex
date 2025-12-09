@@ -1,5 +1,8 @@
 package main
 
+// this represents what is returned by the API and is the species data
+// for initlaising the instance, showing speicies info on inspection and calculating
+// base stats
 type Pokemon struct {
 	ID             int    `json:"id"`
 	Name           string `json:"name"`
@@ -54,4 +57,12 @@ type Pokemon struct {
 			URL  string `json:"url"`
 		} `json:"stat"`
 	} `json:"stats"`
+}
+
+type PokemonInstance struct {
+	Species  Pokemon
+	Nickname string
+	Level    int
+	Hp       int
+	Boxed    bool
 }

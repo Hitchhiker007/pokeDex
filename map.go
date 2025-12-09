@@ -12,6 +12,8 @@ type Config struct {
 	MapNextURL    string // URL for next page of locations
 	MapPrevURL    string // URL for previous page (optional)
 	Pokedex       map[string]Pokemon
+	Party         [6]*PokemonInstance // fixed 6-slot party
+	PC            []*PokemonInstance  // PC storage
 }
 
 // LocationList struct

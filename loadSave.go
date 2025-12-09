@@ -47,7 +47,6 @@ func commandLoad (cfg *Config, args []string) error {
 		fmt.Printf("error reading file: %v\n", err)
 	}
 
-
 	return nil
-
+	
 }

@@ -109,9 +109,14 @@ func getCommands() map[string]cliCommand {
 			callback:    commandInspect,
 		},
 		"load": {
-			name: "load",
+			name:        "load",
 			description: "displays a list of save files to load from",
-			callback: commandLoad,
+			callback:    commandLoad,
+		},
+		"party": {
+			name:        "party",
+			description: "Displays your current party",
+			callback:    commandViewParty,
 		},
 	}
 }

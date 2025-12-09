@@ -15,6 +15,8 @@ func main() {
 		MapNextURL:    "",
 		MapPrevURL:    "",
 		Pokedex:       make(map[string]Pokemon),
+		Party:         [6]*PokemonInstance{},
+		PC:            []*PokemonInstance{},
 	}
 
 	startRepl(cfg)
