@@ -37,7 +37,31 @@ func catch(cfg *Config, args []string) error {
 
 	if roll <= chance {
 		cfg.Pokedex[pokemonName] = pokemon
-		fmt.Printf("Gotcha! %s was caught!\n", pokemonName)
+
+		newPokemon := &PokemonInstance{
+			Species:  pokemon,
+			Nickname: pokemonName,
+			Level:    1,
+			Hp:       pokemon.Stats[0].BaseStat,
+			Boxed:    false,
+		}
+
+		placed := false
+		for i := 0; i < len(cfg.Party); i++ {
+			if cfg.Party[i] == nil {
+				cfg.Party[i] = newPokemon
+				placed = true
+				fmt.Printf("Gotcha! %s was caught and added to your party!\n", pokemonName)
+				break
+			}
+		}
+
+		if !placed {
+			cfg.PC = append(cfg.PC, newPokemon)
+			newPokemon.Boxed = true
+			fmt.Printf("Gotcha! %s was caught, but party is full — sent to the PC!\n", pokemonName)
+		}
+
 	} else {
 		fmt.Printf("%s escaped!\n", pokemonName)
 	}
