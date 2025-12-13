@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"strings"
+
+	"github.com/chzyer/readline"
 )
 
 func catch(cfg *Config, args []string) error {
@@ -49,6 +52,21 @@ func catch(cfg *Config, args []string) error {
 		placed := false
 		for i := 0; i < len(cfg.Party); i++ {
 			if cfg.Party[i] == nil {
+				fmt.Print("Would you like to give your pokemon a nickname? (y/n): ")
+
+				var response string
+				fmt.Scanln(&response)
+
+				if response == "y" || response == "Y" {
+					rl, _ := readline.New("")
+					defer rl.Close()
+
+					nickname, err := rl.Readline()
+					if err == nil && strings.TrimSpace(nickname) != "" {
+						newPokemon.Nickname = nickname
+					}
+				}
+
 				cfg.Party[i] = newPokemon
 				placed = true
 				fmt.Printf("Gotcha! %s was caught and added to your party!\n", pokemonName)
