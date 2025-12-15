@@ -1,0 +1,88 @@
+{
+  "Species": {
+    "id": 25,
+    "name": "pikachu",
+    "base_experience": 112,
+    "height": 4,
+    "weight": 60,
+
+    "types": [
+      {
+        "slot": 1,
+        "type": {
+          "name": "electric",
+          "url": "https://pokeapi.co/api/v2/type/13/"
+        }
+      }
+    ],
+
+    "abilities": [
+      {
+        "ability": {
+          "name": "static",
+          "url": "https://pokeapi.co/api/v2/ability/9/"
+        },
+        "is_hidden": false,
+        "slot": 1
+      },
+      {
+        "ability": {
+          "name": "lightning-rod",
+          "url": "https://pokeapi.co/api/v2/ability/31/"
+        },
+        "is_hidden": true,
+        "slot": 3
+      }
+    ],
+
+    "moves": [
+      {
+        "move": {
+          "name": "thunder-shock",
+          "url": "https://pokeapi.co/api/v2/move/84/"
+        },
+        "version_group_details": [
+          {
+            "level_learned_at": 1,
+            "version_group": {
+              "name": "red-blue",
+              "url": "https://pokeapi.co/api/v2/version-group/1/"
+            },
+            "move_learn_method": {
+              "name": "level-up",
+              "url": "https://pokeapi.co/api/v2/move-learn-method/1/"
+            }
+          }
+        ]
+      }
+    ],
+
+    "sprites": {
+      "front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png"
+    },
+
+    "stats": [
+      {
+        "base_stat": 35,
+        "effort": 0,
+        "stat": {
+          "name": "hp",
+          "url": "https://pokeapi.co/api/v2/stat/1/"
+        }
+      },
+      {
+        "base_stat": 55,
+        "effort": 0,
+        "stat": {
+          "name": "attack",
+          "url": "https://pokeapi.co/api/v2/stat/2/"
+        }
+      }
+    ]
+  },
+
+  "Nickname": "Sparky",
+  "Level": 12,
+  "Hp": 32,
+  "Boxed": true
+}

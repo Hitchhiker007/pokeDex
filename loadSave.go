@@ -1,13 +1,13 @@
-package main 
+package main
 
 import (
-    "bufio"
-    "encoding/json"
-    "fmt"
-    "os"
+	"bufio"
+	"encoding/json"
+	"fmt"
+	"os"
 )
 
-func commandLoad (cfg *Config, args []string) error {
+func commandLoad(cfg *Config, args []string) error {
 
 	if len(args) < 1 {
 		return fmt.Errorf("usage: load <filename>")
@@ -41,6 +41,20 @@ func commandLoad (cfg *Config, args []string) error {
 
 		cfg.Pokedex[pokemonName] = pokemon
 		fmt.Printf("Loaded %s into your Pokédex.\n", pokemonName)
+
+		data, err := os.ReadFile("pokemon_instance.txt")
+		if err != nil {
+			return err
+		}
+
+		var instance PokemonInstance
+		if err := json.Unmarshal(data, &instance); err != nil {
+			return err
+		}
+
+		cfg.PC = append(cfg.PC, &instance)
+		fmt.Println(instance.Nickname, "Lv", instance.Level)
+
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -48,5 +62,5 @@ func commandLoad (cfg *Config, args []string) error {
 	}
 
 	return nil
-	
+
 }
