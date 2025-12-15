@@ -46,3 +46,24 @@ func commandViewParty(cfg *Config, args []string) error {
 	}
 	return nil
 }
+
+func commandViewPc(cfg *Config, args []string) error {
+	if cfg == nil {
+		return fmt.Errorf("error! config is nil")
+	}
+
+	if len(cfg.PC) == 0 {
+		fmt.Println("You currently have no pokemon in your Pc!")
+		return nil
+	}
+
+	fmt.Println("Your Pc:")
+	for i, pokemon := range cfg.PC {
+		if pokemon != nil {
+			fmt.Printf(" - %d. %s\n", i+1, pokemon.Nickname)
+		} else {
+			fmt.Printf(" %d. [Empty Pc]\n", i+1)
+		}
+	}
+	return nil
+}

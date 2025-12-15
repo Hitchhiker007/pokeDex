@@ -118,6 +118,11 @@ func getCommands() map[string]cliCommand {
 			description: "Displays your current party",
 			callback:    commandViewParty,
 		},
+		"pc": {
+			name:        "pc",
+			description: "displays players pc",
+			callback:    commandViewPc,
+		},
 	}
 }
 
