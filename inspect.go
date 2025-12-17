@@ -21,6 +21,11 @@ func commandInspect(cfg *Config, args []string) error {
 		fmt.Printf("You have not caught %s yet!\n", name)
 	}
 
+	if err := displaySprite(pokemon.Sprites.FrontDefault); err != nil {
+		fmt.Println("sprite error:", err)
+	}
+	fmt.Println()
+
 	// print detailed stats
 	fmt.Printf("Name: %s\n", pokemon.Name)
 	fmt.Printf("Base Experience: %d\n", pokemon.BaseExperience)
