@@ -36,6 +36,11 @@ func commandViewParty(cfg *Config, args []string) error {
 	for i, pokemon := range cfg.Party {
 		if pokemon != nil {
 			fmt.Printf(" - %d. %s\n", i+1, pokemon.Nickname)
+			err := displaySprite(pokemon.Species.Sprites.FrontDefault)
+			if err != nil {
+				fmt.Println("sprite error:", err)
+			}
+			fmt.Println()
 			empty = false
 		} else {
 			fmt.Printf(" %d. [Empty Slot]\n", i+1)
