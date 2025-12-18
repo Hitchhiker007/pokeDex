@@ -123,6 +123,11 @@ func getCommands() map[string]cliCommand {
 			description: "displays players pc",
 			callback:    commandViewPc,
 		},
+		"move": {
+			name:        "move",
+			description: "move pokemon between party and pc",
+			callback:    movePokemon,
+		},
 	}
 }
 
