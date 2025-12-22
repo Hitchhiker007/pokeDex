@@ -12,12 +12,12 @@ func movePokemon(cfg *Config, args []string) error {
 
 	name := strings.ToLower(args[0])
 	direction := strings.ToLower(args[1])
+	var pokemon *PokemonInstance
+	var pcIndex int
+	var partyIndex int
+	found := false
 
 	if direction == "party" {
-
-		var pokemon *PokemonInstance
-		var pcIndex int
-		found := false
 
 		for i, p := range cfg.PC {
 			if strings.ToLower(p.Nickname) == name {
@@ -51,6 +51,39 @@ func movePokemon(cfg *Config, args []string) error {
 		cfg.Party[slot] = pokemon
 
 	} else if direction == "pc" {
+
+		for i, p := range cfg.Party {
+			if p == nil {
+				continue
+			}
+
+			if strings.ToLower(p.Nickname) == name {
+				pokemon = p
+				partyIndex = i
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return errors.New("Pokemon not found in Party")
+		}
+
+		slot := -1
+		for i, p := range cfg.PC {
+			if p == nil {
+				slot = i
+				break
+			}
+		}
+
+		if slot == -1 {
+			return errors.New("PC is full")
+		}
+
+		cfg.Party[partyIndex] = nil
+
+		cfg.PC[slot] = pokemon
 
 	}
 
