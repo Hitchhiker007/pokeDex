@@ -78,12 +78,12 @@ func movePokemon(cfg *Config, args []string) error {
 		}
 
 		if slot == -1 {
-			return errors.New("PC is full")
+			cfg.PC = append(cfg.PC, pokemon)
+		} else {
+			cfg.PC[slot] = pokemon
 		}
 
 		cfg.Party[partyIndex] = nil
-
-		cfg.PC[slot] = pokemon
 
 	}
 
