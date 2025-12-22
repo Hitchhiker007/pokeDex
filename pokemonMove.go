@@ -49,6 +49,7 @@ func movePokemon(cfg *Config, args []string) error {
 
 		// add to the party
 		cfg.Party[slot] = pokemon
+		println("Successfuly moved", pokemon.Nickname, "to your Party")
 
 	} else if direction == "pc" {
 
@@ -79,8 +80,10 @@ func movePokemon(cfg *Config, args []string) error {
 
 		if slot == -1 {
 			cfg.PC = append(cfg.PC, pokemon)
+			println("Successfuly moved", pokemon.Nickname, "to PC")
 		} else {
 			cfg.PC[slot] = pokemon
+			println("Successfuly moved", pokemon.Nickname, "to PC")
 		}
 
 		cfg.Party[partyIndex] = nil
