@@ -70,6 +70,7 @@ func catch(cfg *Config, args []string) error {
 				cfg.Party[i] = newPokemon
 				placed = true
 				fmt.Printf("Gotcha! %s was caught and added to your party!\n", pokemonName)
+
 				break
 			}
 		}
