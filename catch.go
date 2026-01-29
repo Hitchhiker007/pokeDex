@@ -70,7 +70,10 @@ func catch(cfg *Config, args []string) error {
 				cfg.Party[i] = newPokemon
 				placed = true
 				fmt.Printf("Gotcha! %s was caught and added to your party!\n", pokemonName)
-
+				// wild Pokemon level is near the players level
+				// wildLevel = Player Level + random offset
+				// random offset = -1, 0, or 1
+				// wildLevel = PlayerLevel + r, where r ∈ {-1, 0, 1}
 				wildLevel := cfg.PlayerLV + rand.Intn(3) - 1
 				if wildLevel < 1 {
 					wildLevel = 1
