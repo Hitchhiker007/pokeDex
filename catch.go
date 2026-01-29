@@ -71,6 +71,14 @@ func catch(cfg *Config, args []string) error {
 				placed = true
 				fmt.Printf("Gotcha! %s was caught and added to your party!\n", pokemonName)
 
+				wildLevel := cfg.PlayerLV + rand.Intn(3) - 1
+				if wildLevel < 1 {
+					wildLevel = 1
+				}
+				// EXP = (BaseExp × Level) / 7
+				EXP := (pokemon.BaseExperience * wildLevel)
+				fmt.Printf("Player earnt %d xp!\n", EXP)
+				cfg.PlayerXP += EXP
 				break
 			}
 		}

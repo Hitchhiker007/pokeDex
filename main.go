@@ -17,6 +17,8 @@ func main() {
 		Pokedex:       make(map[string]Pokemon),
 		Party:         [6]*PokemonInstance{},
 		PC:            []*PokemonInstance{},
+		PlayerXP:      0,
+		PlayerLV:      0,
 	}
 
 	startRepl(cfg)

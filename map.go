@@ -14,6 +14,8 @@ type Config struct {
 	Pokedex       map[string]Pokemon
 	Party         [6]*PokemonInstance // fixed 6-slot party
 	PC            []*PokemonInstance  // PC storage
+	PlayerXP      int
+	PlayerLV      int
 }
 
 // LocationList struct
