@@ -82,6 +82,12 @@ func catch(cfg *Config, args []string) error {
 				EXP := (pokemon.BaseExperience * wildLevel)
 				fmt.Printf("Player earnt %d xp!\n", EXP)
 				cfg.PlayerXP += EXP
+
+				// cehck for lv up occurence
+				for cfg.PlayerLV < 50 && cfg.PlayerXP >= XpLevelCheck(cfg.PlayerLV+1) {
+					cfg.PlayerLV++
+					fmt.Printf("Player Level Up! New Player Level: %d\n", cfg.PlayerLV)
+				}
 				break
 			}
 		}
@@ -97,4 +103,12 @@ func catch(cfg *Config, args []string) error {
 	}
 
 	return nil
+}
+
+func XpLevelCheck(level int) int {
+	if level == 2 {
+		return 1 // super fast first level for testing
+	}
+	return 6 * level * level * level
+	// 6 times the xp needed for a pokemon
 }
