@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
 	"time"
 
 	pokecache "github.com/Hitchhiker007/pokeDex/internal"
@@ -14,6 +15,12 @@ import (
 type Client struct {
 	httpClient http.Client
 	cache      *pokecache.Cache
+	// below is for my TokenBucket rate limting
+	currentTokens float64
+	tokenCapacity int
+	refillRate    float64
+	lastRefill    time.Time
+	mu            sync.Mutex
 }
 
 // NewClient creates a new pokeapi client with a timeout for requests
@@ -24,6 +31,11 @@ func NewClient(timeout time.Duration) *Client {
 			Timeout: timeout,
 		},
 		cache: pokecache.NewCache(5 * time.Minute),
+		// here rate limting is set on the new client creation
+		tokenCapacity: 5,
+		refillRate:    0.5, // 5 requests per 10 secs -> 5 / 10 = 0.5
+		currentTokens: 5,   // start full
+		lastRefill:    time.Now(),
 	}
 }
 
@@ -31,10 +43,34 @@ func NewClient(timeout time.Duration) *Client {
 // return cached value
 // if not perform a http get request, read the response body, caches it, and then return it
 func (c *Client) Get(url string) ([]byte, error) {
-	// Check cache first
+
+	// Check cache first, no tokens consumed
 	if cached, found := c.cache.Get(url); found {
 		return cached, nil
 	}
+
+	// lock mutex to protect shared state tokens and lastRefill
+	// multiple goroutines, concurrent requests
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// how much time has passed since the last refill of tokens
+	elapsedTime := time.Now().Sub(c.lastRefill)
+	// refill bucket by -> elapsed seconds * refillRate (only done when a request happens)
+	refill := elapsedTime.Seconds() * c.refillRate
+	c.currentTokens = c.currentTokens + refill
+	// ensure tokens do no exceed the bucket capacity
+	if c.currentTokens > float64(c.tokenCapacity) {
+		c.currentTokens = float64(c.tokenCapacity)
+	}
+	// if token exists consume, else throw err
+	if c.currentTokens >= 1 {
+		c.currentTokens -= 1
+	} else {
+		return nil, fmt.Errorf("Rate Limiting Has Been Triggered Please Wait and Try again")
+	}
+	// update timestamp
+	c.lastRefill = time.Now()
 
 	// perform request
 	res, err := c.httpClient.Get(url)
