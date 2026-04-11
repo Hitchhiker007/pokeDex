@@ -18,8 +18,10 @@ func movePokemon(cfg *Config, args []string) error {
 	found := false
 
 	if direction == "party" {
-
 		for i, p := range cfg.PC {
+			if p == nil {
+				continue
+			}
 			if strings.ToLower(p.Nickname) == name {
 				pokemon = p
 				pcIndex = i
