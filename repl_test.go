@@ -43,3 +43,36 @@ func TestCleanInput(t *testing.T) {
 		}
 	}
 }
+
+func TestSaveAndLoad(t *testing.T) {
+	cfg := &Config{
+		SaveDir:  t.TempDir(),
+		Pokedex:  make(map[string]Pokemon),
+		PlayerLV: 5,
+		PlayerXP: 120,
+	}
+
+	// save
+	if err := saveGameState(cfg, nil); err != nil {
+		t.Errorf("saveGameState function failed: %v", err)
+	}
+
+	// create a fresh empty config with same SaveDir
+
+	cfg2 := &Config{
+		SaveDir: cfg.SaveDir,
+		Pokedex: make(map[string]Pokemon),
+	}
+
+	// load
+	if err := loadGameState(cfg2, nil); err != nil {
+		t.Errorf("loadGameState function failed: %v", err)
+	}
+
+	if cfg2.PlayerLV != 5 {
+		t.Errorf("expected PlayerLV 5, got %d", cfg.PlayerLV)
+	}
+	if cfg2.PlayerXP != 120 {
+		t.Errorf("expected PlayerXP 120, got %d", cfg.PlayerXP)
+	}
+}

@@ -3,19 +3,25 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
+	"time"
 
 	pokeapi "github.com/Hitchhiker007/pokeDex/pokeapi"
+	"github.com/google/uuid"
 )
 
 type Config struct {
-	pokeapiClient *pokeapi.Client
-	MapNextURL    string // URL for next page of locations
-	MapPrevURL    string // URL for previous page (optional)
-	Pokedex       map[string]Pokemon
-	Party         [6]*PokemonInstance // fixed 6-slot party
-	PC            []*PokemonInstance  // PC storage
-	PlayerXP      int
-	PlayerLV      int
+	pokeapiClient   *pokeapi.Client `json:"-"` // skip this field when saving
+	MapNextURL      string          // URL for next page of locations
+	MapPrevURL      string          // URL for previous page (optional)
+	Pokedex         map[string]Pokemon
+	Party           [6]*PokemonInstance // fixed 6-slot party
+	PC              []*PokemonInstance  // PC storage
+	PlayerXP        int
+	PlayerLV        int
+	LastCloudSaveID string
+	SaveDir         string // defaults to ~/.pokedex, overridable for tests
 }
 
 // LocationList struct
@@ -27,6 +33,18 @@ type LocationList struct {
 		Name string `json:"name"`
 		URL  string `json:"url"`
 	} `json:"results"`
+}
+
+// SaveFile = everything needed to RESTORE the game
+type SaveFile struct {
+	SaveID     string
+	BaseSaveID string
+	Timestamp  time.Time
+	Pokedex    map[string]Pokemon
+	Party      [6]*PokemonInstance
+	PC         []*PokemonInstance
+	PlayerXP   int
+	PlayerLV   int
 }
 
 // Generic Unmarshal function
@@ -79,4 +97,99 @@ func commandMapBack(cfg *Config, args []string) error {
 		return nil
 	}
 	return fetchLocations(cfg, cfg.MapPrevURL)
+}
+
+func saveGameState(cfg *Config, args []string) error {
+	saveFile := SaveFile{
+		SaveID:     uuid.New().String(),
+		BaseSaveID: cfg.LastCloudSaveID,
+		Timestamp:  time.Now().UTC(),
+		Pokedex:    cfg.Pokedex,
+		Party:      cfg.Party,
+		PC:         cfg.PC,
+		PlayerXP:   cfg.PlayerXP,
+		PlayerLV:   cfg.PlayerLV,
+	}
+	saveData, err := json.Marshal(saveFile)
+	if err != nil {
+		return fmt.Errorf("failed to marshal save file: %w", err)
+	}
+
+	var dirPath string
+
+	if cfg.SaveDir != "" {
+		dirPath = cfg.SaveDir
+	} else {
+		// get the home directory
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return fmt.Errorf("failed to get home directory: %w", err)
+		}
+
+		// build the folder path ~/.pokedex
+		dirPath = filepath.Join(homeDir, ".pokedex")
+
+	}
+
+	// create the folder if it doesn't exist
+	if err := os.MkdirAll(dirPath, 0755); err != nil {
+		return fmt.Errorf("failed to create save directory: %w", err)
+	}
+
+	// build the full file path ~/.pokedex/save.json
+	savePath := filepath.Join(dirPath, "save.json")
+
+	if err := os.WriteFile(savePath, saveData, 0644); err != nil {
+		return fmt.Errorf("failed to write save file: %w", err)
+	}
+	fmt.Println("Game progress saved!")
+	return nil
+}
+
+func loadGameState(cfg *Config, args []string) error {
+	var dirPath string
+
+	if cfg.SaveDir != "" {
+		dirPath = cfg.SaveDir // use the override (e.g. from tests)
+	} else {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return fmt.Errorf("failed to get home directory: %w", err)
+		}
+		dirPath = filepath.Join(homeDir, ".pokedex")
+	}
+
+	if err := os.MkdirAll(dirPath, 0755); err != nil {
+		return fmt.Errorf("failed to create save directory: %w", err)
+	}
+
+	savePath := filepath.Join(dirPath, "save.json")
+
+	data, err := os.ReadFile(savePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			fmt.Println("no save file found. Start playing to create one!")
+			return nil
+		}
+		return fmt.Errorf("failed to read save file: %w", err)
+	}
+
+	var saveFile SaveFile
+
+	if err := Unmarshal(data, &saveFile); err != nil {
+		return fmt.Errorf("failed to unmarshal save file: %w", err)
+	}
+
+	cfg.Pokedex = saveFile.Pokedex
+	cfg.Party = saveFile.Party
+	cfg.PC = saveFile.PC
+	cfg.PlayerXP = saveFile.PlayerXP
+	cfg.PlayerLV = saveFile.PlayerLV
+	cfg.LastCloudSaveID = saveFile.SaveID
+
+	fmt.Println("Successfully loaded save file!")
+	fmt.Printf("Player Level: %d\n", cfg.PlayerLV)
+	fmt.Printf("Player XP: %d\n", cfg.PlayerXP)
+
+	return nil
 }

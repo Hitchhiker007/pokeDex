@@ -108,11 +108,11 @@ func getCommands() map[string]cliCommand {
 			description: "It takes the name of a Pokemon and prints the name, height, weight, stats and type(s) of the Pokemon.",
 			callback:    commandInspect,
 		},
-		"load": {
-			name:        "load",
-			description: "displays a list of save files to load from",
-			callback:    commandLoad,
-		},
+		// "load": {
+		// 	name:        "load",
+		// 	description: "displays a list of save files to load from",
+		// 	callback:    commandLoad,
+		// },
 		"party": {
 			name:        "party",
 			description: "Displays your current party",
@@ -128,6 +128,16 @@ func getCommands() map[string]cliCommand {
 			description: "move pokemon between party and pc",
 			callback:    movePokemon,
 		},
+		"save": {
+			name:        "save",
+			description: "save your games progress",
+			callback:    saveGameState,
+		},
+		"load": {
+			name:        "load",
+			description: "load any existing game save",
+			callback:    loadGameState,
+		},
 	}
 }
 
@@ -138,6 +148,15 @@ func cleanInput(text string) []string {
 }
 
 func commandExit(cfg *Config, args []string) error {
+	fmt.Print("Do you want to save the game before exiting? (y/n): ")
+	var reponse string
+	fmt.Scanln(&reponse)
+	if reponse == "y" {
+		if err := saveGameState(cfg, args); err != nil {
+			fmt.Println("Failed to save game:", err)
+			return nil
+		}
+	}
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
