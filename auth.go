@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"time"
 )
@@ -81,59 +83,67 @@ func requestDeviceCode() (*DeviceCodeResponse, error) {
 
 }
 
-func pollForToken(deviceCode *DeviceCodeResponse) (*TokenResponse, error) {
+func pollForToken(ctx context.Context, deviceCode *DeviceCodeResponse) (*TokenResponse, error) {
 	ticker := time.NewTicker(time.Duration(deviceCode.Interval) * time.Second)
 	defer ticker.Stop()
 
 	for i := 0; i < maxLoginAttempts; i++ {
-		<-ticker.C // wait for interval before each attempt
-		resp, err := http.PostForm(tokenURL, url.Values{
-			"client_id":     {googleClientID},
-			"device_code":   {deviceCode.DeviceCode},
-			"grant_type":    {"urn:ietf:params:oauth:grant-type:device_code"},
-			"client_secret": {googleClientSecret},
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to request token: %w", err)
-		}
+		select {
+		case <-ctx.Done():
+			return nil, fmt.Errorf("login canceled")
 
-		// read response body
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, err
-		}
-		resp.Body.Close()
+		case <-ticker.C: // wait for interval before each attempt
+			resp, err := http.PostForm(tokenURL, url.Values{
+				"client_id":     {googleClientID},
+				"device_code":   {deviceCode.DeviceCode},
+				"grant_type":    {"urn:ietf:params:oauth:grant-type:device_code"},
+				"client_secret": {googleClientSecret},
+			})
+			if err != nil {
+				return nil, fmt.Errorf("failed to request token: %w", err)
+			}
 
-		var token TokenResponse
-		if err := Unmarshal(body, &token); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal token response: %w", err)
-		}
-		if token.Error == "authorization_pending" {
-			fmt.Println("Waiting for approval...")
-			continue
-		}
-		if token.Error != "" {
-			return nil, fmt.Errorf("token error: %s", token.Error)
-		}
+			// read response body
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body.Close()
 
-		return &token, nil
+			var token TokenResponse
+			if err := Unmarshal(body, &token); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal token response: %w", err)
+			}
+			if token.Error == "authorization_pending" {
+				fmt.Println("Waiting for approval...")
+				continue
+			}
+			if token.Error != "" {
+				return nil, fmt.Errorf("token error: %s", token.Error)
+			}
+
+			return &token, nil
+		}
 	}
-	// should not get here
+
 	return nil, fmt.Errorf("polling timed out")
 }
 
 func commandLogin(cfg *Config, args []string) error {
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
 	deviceCodeResponse, err := requestDeviceCode()
 	if err != nil {
 		return fmt.Errorf("failed to request device code: %w", err)
 	}
 	fmt.Printf("Go to: %s\n", deviceCodeResponse.VerificationUrl)
 	fmt.Printf("Enter code: %s\n", deviceCodeResponse.UserCode)
+	fmt.Printf("Press Ctrl + C to cancel login\n")
 	fmt.Println("Waiting for you to approve...")
 
-	pollTokenReponse, err := pollForToken(deviceCodeResponse)
+	pollTokenReponse, err := pollForToken(ctx, deviceCodeResponse)
 	if err != nil {
-		return fmt.Errorf("something is wrong with token: %w", err)
+		return fmt.Errorf("\nerror: %w", err)
 	}
 	if err := saveToken(pollTokenReponse); err != nil {
 		return fmt.Errorf("failed to save token: %w", err)
