@@ -143,6 +143,11 @@ func getCommands() map[string]cliCommand {
 			description: "login into google auth to utilise cloud saves",
 			callback:    commandLogin,
 		},
+		"logout": {
+			name:        "logout",
+			description: "logout of your google account",
+			callback:    commandLogOut,
+		},
 	}
 }
 

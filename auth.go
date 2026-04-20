@@ -135,7 +135,7 @@ func commandLogin(cfg *Config, args []string) error {
 		return nil
 	}
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer cancel()
+
 	deviceCodeResponse, err := requestDeviceCode()
 	if err != nil {
 		return fmt.Errorf("failed to request device code: %w", err)
@@ -146,13 +146,38 @@ func commandLogin(cfg *Config, args []string) error {
 	fmt.Println("Waiting for you to approve...")
 
 	pollTokenReponse, err := pollForToken(ctx, deviceCodeResponse)
+	cancel()
 	if err != nil {
-		return fmt.Errorf("\nerror: %w", err)
+		fmt.Println("\nLogin cancelled!")
+		return nil
 	}
 	if err := saveToken(pollTokenReponse); err != nil {
 		return fmt.Errorf("failed to save token: %w", err)
 	}
+	cfg.Token = pollTokenReponse
 	fmt.Println("Successfully logged in!")
+	return nil
+}
+
+func commandLogOut(cfg *Config, args []string) error {
+	// fmt.Printf("Debug - Token is: %v\n", cfg.Token)
+	if cfg.Token == nil {
+		fmt.Println("You are already logged out!")
+		return nil
+	}
+	var dirPath string
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to get home directory: %w", err)
+	}
+	dirPath = filepath.Join(homeDir, ".pokedex")
+
+	tokenPath := filepath.Join(dirPath, "token.json")
+	if err := os.Remove(tokenPath); err != nil {
+		return fmt.Errorf("failed to delete token file: %w", err)
+	}
+	cfg.Token = nil
+	fmt.Println("Successfully logged out!")
 	return nil
 }
 
