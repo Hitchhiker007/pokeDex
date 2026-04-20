@@ -138,6 +138,11 @@ func getCommands() map[string]cliCommand {
 			description: "load any existing game save",
 			callback:    loadGameState,
 		},
+		"login": {
+			name:        "login",
+			description: "login into google auth to utilise cloud saves",
+			callback:    commandLogin,
+		},
 	}
 }
 
