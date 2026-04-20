@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	pokeapi "github.com/Hitchhiker007/pokeDex/pokeapi"
@@ -19,6 +20,11 @@ func main() {
 		PC:            []*PokemonInstance{},
 		PlayerXP:      0,
 		PlayerLV:      0,
+		// Token is nil by default we don't need to set it here
+	}
+
+	if err := loadToken(cfg); err != nil {
+		fmt.Println("Warning: could not load token:", err)
 	}
 
 	startRepl(cfg)

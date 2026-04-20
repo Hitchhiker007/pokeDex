@@ -130,6 +130,10 @@ func pollForToken(ctx context.Context, deviceCode *DeviceCodeResponse) (*TokenRe
 }
 
 func commandLogin(cfg *Config, args []string) error {
+	if cfg.Token != nil {
+		fmt.Println("You are already logged in!")
+		return nil
+	}
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 	deviceCodeResponse, err := requestDeviceCode()
@@ -180,5 +184,35 @@ func saveToken(token *TokenResponse) error {
 		return fmt.Errorf("failed to write token file: %w", err)
 	}
 	fmt.Println("Token Successfully Saved!")
+	return nil
+}
+
+func loadToken(cfg *Config) error {
+	var dirPath string
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to get home directory: %w", err)
+	}
+	dirPath = filepath.Join(homeDir, ".pokedex")
+
+	tokenPath := filepath.Join(dirPath, "token.json")
+	data, err := os.ReadFile(tokenPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			fmt.Println("no token file found. Login to create one!")
+			return nil
+		}
+		return fmt.Errorf("failed to read token file: %w", err)
+	}
+
+	var token TokenResponse
+
+	if err := Unmarshal(data, &token); err != nil {
+		return fmt.Errorf("failed to unmarshal token file: %w", err)
+	}
+
+	cfg.Token = &token
+
+	fmt.Println("Successfully loaded token!")
 	return nil
 }

@@ -22,6 +22,7 @@ type Config struct {
 	PlayerLV        int
 	LastCloudSaveID string
 	SaveDir         string // defaults to ~/.pokedex, overridable for tests
+	Token           *TokenResponse
 }
 
 // LocationList struct
