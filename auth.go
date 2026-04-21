@@ -53,13 +53,14 @@ type DeviceCodeResponse struct {
 }
 
 type TokenResponse struct {
-	AccessToken  string `json:"access_token"`
-	ExpiresIn    int    `json:"expires_in"`
-	Scope        string `json:"scope"`
-	TokenType    string `json:"token_type"`
-	RefreshToken string `json:"refresh_token"`
-	IdToken      string `json:"id_token"`
-	Error        string `json:"error"`
+	AccessToken  string    `json:"access_token"`
+	ExpiresIn    int       `json:"expires_in"`
+	Scope        string    `json:"scope"`
+	TokenType    string    `json:"token_type"`
+	RefreshToken string    `json:"refresh_token"`
+	IdToken      string    `json:"id_token"`
+	Error        string    `json:"error"`
+	IssuedAt     time.Time `json:"issued_at"`
 }
 
 func requestDeviceCode() (*DeviceCodeResponse, error) {
@@ -208,6 +209,8 @@ func saveToken(token *TokenResponse) error {
 	// build the full file path ~/.pokedex/token.json
 	tokenPath := filepath.Join(dirPath, "token.json")
 
+	token.IssuedAt = time.Now().UTC()
+
 	tokenData, err := json.Marshal(token)
 	if err != nil {
 		return fmt.Errorf("failed to marshal token: %w", err)
@@ -255,6 +258,10 @@ func commandCloudSave(cfg *Config, args []string) error {
 		return nil
 	}
 
+	if err := tokenRefresh(cfg); err != nil {
+		return fmt.Errorf("failed to refresh token: %w", err)
+	}
+
 	fmt.Printf("Debug - IdToken: %s\n", cfg.Token.IdToken[:50])
 
 	saveFile := SaveFile{
@@ -299,6 +306,10 @@ func downloadCloudSave(cfg *Config, args []string) error {
 		return nil
 	}
 
+	if err := tokenRefresh(cfg); err != nil {
+		return fmt.Errorf("failed to refresh token: %w", err)
+	}
+
 	req, err := http.NewRequest("GET", downloadCloudSaveURL, nil)
 	if err != nil {
 		return fmt.Errorf("failed to get request cloud save: %w", err)
@@ -338,5 +349,43 @@ func downloadCloudSave(cfg *Config, args []string) error {
 	cfg.LastCloudSaveID = downloadedSave.SaveID
 
 	fmt.Println("Cloud save downloaded successfully!")
+	return nil
+}
+
+func tokenRefresh(cfg *Config) error {
+	expiresAt := cfg.Token.IssuedAt.Add(time.Duration(cfg.Token.ExpiresIn) * time.Second)
+	if time.Now().UTC().After(expiresAt) {
+		resp, err := http.PostForm(tokenURL, url.Values{
+			"client_id":     {googleClientID},
+			"grant_type":    {"refresh_token"},
+			"client_secret": {googleClientSecret},
+			"refresh_token": {cfg.Token.RefreshToken},
+		})
+		if err != nil {
+			return fmt.Errorf("failed to refresh token: %w", err)
+		}
+
+		// read response body
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+		resp.Body.Close()
+
+		var token TokenResponse
+		if err := Unmarshal(body, &token); err != nil {
+			return fmt.Errorf("failed to unmarshal token response: %w", err)
+		}
+		if token.Error != "" {
+			return fmt.Errorf("token error: %s", token.Error)
+		}
+
+		token.IssuedAt = time.Now().UTC()
+		cfg.Token = &token
+		if err := saveToken(&token); err != nil {
+			return fmt.Errorf("failed to save refreshed token: %w", err)
+		}
+		return nil
+	}
 	return nil
 }
