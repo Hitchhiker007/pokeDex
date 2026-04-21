@@ -63,6 +63,15 @@ type TokenResponse struct {
 	IssuedAt     time.Time `json:"issued_at"`
 }
 
+// helper function
+func getPokedexDir() (string, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("failed to get home directory: %w", err)
+	}
+	return filepath.Join(homeDir, ".pokedex"), nil
+}
+
 func requestDeviceCode() (*DeviceCodeResponse, error) {
 
 	// perform POST request
@@ -173,12 +182,11 @@ func commandLogOut(cfg *Config, args []string) error {
 		fmt.Println("You are already logged out!")
 		return nil
 	}
-	var dirPath string
-	homeDir, err := os.UserHomeDir()
+
+	dirPath, err := getPokedexDir()
 	if err != nil {
-		return fmt.Errorf("failed to get home directory: %w", err)
+		return err
 	}
-	dirPath = filepath.Join(homeDir, ".pokedex")
 
 	tokenPath := filepath.Join(dirPath, "token.json")
 	if err := os.Remove(tokenPath); err != nil {
@@ -190,16 +198,12 @@ func commandLogOut(cfg *Config, args []string) error {
 }
 
 func saveToken(token *TokenResponse) error {
-	var dirPath string
 
 	// get the home directory
-	homeDir, err := os.UserHomeDir()
+	dirPath, err := getPokedexDir()
 	if err != nil {
-		return fmt.Errorf("failed to get home directory: %w", err)
+		return err
 	}
-
-	// build the folder path ~/.pokedex
-	dirPath = filepath.Join(homeDir, ".pokedex")
 
 	// create the folder if it doesn't exist
 	if err := os.MkdirAll(dirPath, 0755); err != nil {
@@ -224,11 +228,10 @@ func saveToken(token *TokenResponse) error {
 
 func loadToken(cfg *Config) error {
 	var dirPath string
-	homeDir, err := os.UserHomeDir()
+	dirPath, err := getPokedexDir()
 	if err != nil {
-		return fmt.Errorf("failed to get home directory: %w", err)
+		return err
 	}
-	dirPath = filepath.Join(homeDir, ".pokedex")
 
 	tokenPath := filepath.Join(dirPath, "token.json")
 	data, err := os.ReadFile(tokenPath)
@@ -262,7 +265,7 @@ func commandCloudSave(cfg *Config, args []string) error {
 		return fmt.Errorf("failed to refresh token: %w", err)
 	}
 
-	fmt.Printf("Debug - IdToken: %s\n", cfg.Token.IdToken[:50])
+	// fmt.Printf("Debug - IdToken: %s\n", cfg.Token.IdToken[:50])
 
 	saveFile := SaveFile{
 		SaveID:     uuid.New().String(),

@@ -121,15 +121,10 @@ func saveGameState(cfg *Config, args []string) error {
 	if cfg.SaveDir != "" {
 		dirPath = cfg.SaveDir
 	} else {
-		// get the home directory
-		homeDir, err := os.UserHomeDir()
+		dirPath, err = getPokedexDir()
 		if err != nil {
-			return fmt.Errorf("failed to get home directory: %w", err)
+			return err
 		}
-
-		// build the folder path ~/.pokedex
-		dirPath = filepath.Join(homeDir, ".pokedex")
-
 	}
 
 	// create the folder if it doesn't exist
@@ -153,13 +148,12 @@ func loadGameState(cfg *Config, args []string) error {
 	if cfg.SaveDir != "" {
 		dirPath = cfg.SaveDir // use the override (e.g. from tests)
 	} else {
-		homeDir, err := os.UserHomeDir()
+		var err error
+		dirPath, err = getPokedexDir()
 		if err != nil {
-			return fmt.Errorf("failed to get home directory: %w", err)
+			return err
 		}
-		dirPath = filepath.Join(homeDir, ".pokedex")
 	}
-
 	if err := os.MkdirAll(dirPath, 0755); err != nil {
 		return fmt.Errorf("failed to create save directory: %w", err)
 	}
