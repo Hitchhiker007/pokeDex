@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -11,6 +12,8 @@ import (
 	"os/signal"
 	"path/filepath"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const googleClientID = "23538631454-pnn2huu7gpl5hb0ejrhmgqqr362icma0.apps.googleusercontent.com"
@@ -19,6 +22,8 @@ var googleClientSecret string
 
 const deviceCodeUrl = "https://oauth2.googleapis.com/device/code"
 const tokenURL = "https://oauth2.googleapis.com/token"
+
+const cloudSaveURL = "https://australia-southeast1-pokeapi-483407.cloudfunctions.net/uploadSave"
 
 // without this we can techincally loop forever if "authorization pending" keeps returning
 // 120 seconds ÷ 5 second interval = 24 attempts
@@ -52,6 +57,7 @@ type TokenResponse struct {
 	Scope        string `json:"scope"`
 	TokenType    string `json:"token_type"`
 	RefreshToken string `json:"refresh_token"`
+	IdToken      string `json:"id_token"`
 	Error        string `json:"error"`
 }
 
@@ -241,3 +247,52 @@ func loadToken(cfg *Config) error {
 	fmt.Println("Successfully loaded token!")
 	return nil
 }
+
+func commandCloudSave(cfg *Config, args []string) error {
+	if cfg.Token == nil {
+		fmt.Println("You must be logged in to use cloud saves!")
+		return nil
+	}
+
+	fmt.Printf("Debug - IdToken: %s\n", cfg.Token.IdToken[:50])
+
+	saveFile := SaveFile{
+		SaveID:     uuid.New().String(),
+		BaseSaveID: cfg.LastCloudSaveID,
+		Timestamp:  time.Now().UTC(),
+		Pokedex:    cfg.Pokedex,
+		Party:      cfg.Party,
+		PC:         cfg.PC,
+		PlayerXP:   cfg.PlayerXP,
+		PlayerLV:   cfg.PlayerLV,
+	}
+
+	saveData, err := json.Marshal(saveFile)
+	if err != nil {
+		return fmt.Errorf("failed to marshal save: %w", err)
+	}
+
+	req, err := http.NewRequest("POST", cloudSaveURL, bytes.NewBuffer(saveData))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+cfg.Token.IdToken)
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("cloud save failed with status: %d", resp.StatusCode)
+	}
+	fmt.Println("Cloud save successful!")
+	return nil
+}
+
+// Check cfg.Token != nil
+// Make a GET request to cloudLoadURL with the auth header
+// Unmarshal the response into a SaveFile
+// Populate cfg from the SaveFile
