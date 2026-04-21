@@ -24,6 +24,7 @@ const deviceCodeUrl = "https://oauth2.googleapis.com/device/code"
 const tokenURL = "https://oauth2.googleapis.com/token"
 
 const cloudSaveURL = "https://australia-southeast1-pokeapi-483407.cloudfunctions.net/uploadSave"
+const downloadCloudSaveURL = "https://australia-southeast1-pokeapi-483407.cloudfunctions.net/downloadSave"
 
 // without this we can techincally loop forever if "authorization pending" keeps returning
 // 120 seconds ÷ 5 second interval = 24 attempts
@@ -292,7 +293,50 @@ func commandCloudSave(cfg *Config, args []string) error {
 	return nil
 }
 
-// Check cfg.Token != nil
-// Make a GET request to cloudLoadURL with the auth header
-// Unmarshal the response into a SaveFile
-// Populate cfg from the SaveFile
+func downloadCloudSave(cfg *Config, args []string) error {
+	if cfg.Token == nil {
+		fmt.Println("You must be logged in to use cloud saves!")
+		return nil
+	}
+
+	req, err := http.NewRequest("GET", downloadCloudSaveURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to get request cloud save: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+cfg.Token.IdToken)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("cloud save download failed: %d", resp.StatusCode)
+	}
+
+	// read the body into []byte for your Unmarshal function
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	// unmarshal into a local SaveFile struct
+	var downloadedSave SaveFile
+	if err := Unmarshal(data, &downloadedSave); err != nil {
+		return fmt.Errorf("failed to parse save file: %w", err)
+	}
+
+	// populate cfg fields from the SaveFile
+	cfg.Pokedex = downloadedSave.Pokedex
+	cfg.Party = downloadedSave.Party
+	cfg.PC = downloadedSave.PC
+	cfg.PlayerXP = downloadedSave.PlayerXP
+	cfg.PlayerLV = downloadedSave.PlayerLV
+	cfg.LastCloudSaveID = downloadedSave.SaveID
+
+	fmt.Println("Cloud save downloaded successfully!")
+	return nil
+}

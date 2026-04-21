@@ -148,6 +148,11 @@ func getCommands() map[string]cliCommand {
 			description: "upload save to cloud",
 			callback:    commandCloudSave,
 		},
+		"download": {
+			name:        "download",
+			description: "download save from the cloud",
+			callback:    downloadCloudSave,
+		},
 	}
 }
 
